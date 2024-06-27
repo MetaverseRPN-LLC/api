@@ -13,7 +13,7 @@
       "name": "AGPLv3",
       "url": "https://github.com/revoltchat/delta/blob/master/LICENSE"
     },
-    "version": "0.7.4"
+    "version": "0.7.12"
   },
   "servers": [
     {
@@ -5939,6 +5939,26 @@
           {
             "type": "object",
             "required": [
+              "max",
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "TooManyPendingFriendRequests"
+                ]
+              },
+              "max": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
               "type"
             ],
             "properties": {
@@ -6662,7 +6682,7 @@
             }
           },
           "badges": {
-            "description": "Bitfield of user badges",
+            "description": "Bitfield of user badges\n\nhttps://docs.rs/revolt-models/latest/revolt_models/v0/enum.UserBadges.html",
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
@@ -6676,17 +6696,8 @@
             ],
             "nullable": true
           },
-          "profile": {
-            "description": "User's profile page",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UserProfile"
-              }
-            ],
-            "nullable": true
-          },
           "flags": {
-            "description": "Enum of user flags",
+            "description": "Enum of user flags\n\nhttps://docs.rs/revolt-models/latest/revolt_models/v0/enum.UserFlags.html",
             "type": "integer",
             "format": "uint32",
             "minimum": 0.0
@@ -6960,28 +6971,6 @@
           "Invisible"
         ]
       },
-      "UserProfile": {
-        "description": "User's profile",
-        "type": "object",
-        "properties": {
-          "content": {
-            "description": "Text content on user's profile",
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 0,
-            "nullable": true
-          },
-          "background": {
-            "description": "Background visible on user's profile",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/File"
-              }
-            ],
-            "nullable": true
-          }
-        }
-      },
       "BotInformation": {
         "description": "Bot information for if the user is a bot",
         "type": "object",
@@ -7100,7 +7089,8 @@
           "StatusText",
           "StatusPresence",
           "ProfileContent",
-          "ProfileBackground"
+          "ProfileBackground",
+          "DisplayName"
         ]
       },
       "DataChangeUsername": {
@@ -7123,6 +7113,28 @@
             "type": "string",
             "maxLength": 1024,
             "minLength": 8
+          }
+        }
+      },
+      "UserProfile": {
+        "description": "User's profile",
+        "type": "object",
+        "properties": {
+          "content": {
+            "description": "Text content on user's profile",
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          },
+          "background": {
+            "description": "Background visible on user's profile",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/File"
+              }
+            ],
+            "nullable": true
           }
         }
       },
@@ -7832,6 +7844,24 @@
             "description": "Id of the user or webhook that sent this message",
             "type": "string"
           },
+          "user": {
+            "description": "The user that sent this message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              }
+            ],
+            "nullable": true
+          },
+          "member": {
+            "description": "The member that sent this message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Member"
+              }
+            ],
+            "nullable": true
+          },
           "webhook": {
             "description": "The webhook that sent this message",
             "allOf": [
@@ -7923,8 +7953,94 @@
               }
             ],
             "nullable": true
+          },
+          "flags": {
+            "description": "Bitfield of message flags\n\nhttps://docs.rs/revolt-models/latest/revolt_models/v0/enum.MessageFlags.html",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0
           }
         }
+      },
+      "Member": {
+        "description": "Server Member",
+        "type": "object",
+        "required": [
+          "_id",
+          "joined_at"
+        ],
+        "properties": {
+          "_id": {
+            "description": "Unique member id",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberCompositeKey"
+              }
+            ]
+          },
+          "joined_at": {
+            "description": "Time at which this user joined the server",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
+              }
+            ]
+          },
+          "nickname": {
+            "description": "Member's nickname",
+            "type": "string",
+            "nullable": true
+          },
+          "avatar": {
+            "description": "Avatar attachment",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/File"
+              }
+            ],
+            "nullable": true
+          },
+          "roles": {
+            "description": "Member's roles",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "description": "Timestamp this member is timed out until",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ISO8601 Timestamp"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "MemberCompositeKey": {
+        "description": "Composite primary key consisting of server and user id",
+        "type": "object",
+        "required": [
+          "server",
+          "user"
+        ],
+        "properties": {
+          "server": {
+            "description": "Server Id",
+            "type": "string"
+          },
+          "user": {
+            "description": "User Id",
+            "type": "string"
+          }
+        }
+      },
+      "ISO8601 Timestamp": {
+        "description": "ISO8601 formatted timestamp",
+        "type": "string",
+        "format": "date-time",
+        "example": "1970-01-01T00:00:00Z"
       },
       "MessageWebhook": {
         "description": "Information about the webhook bundled with Message",
@@ -8160,12 +8276,6 @@
             }
           }
         ]
-      },
-      "ISO8601 Timestamp": {
-        "description": "ISO8601 formatted timestamp",
-        "type": "string",
-        "format": "date-time",
-        "example": "1970-01-01T00:00:00Z"
       },
       "Embed": {
         "description": "Embed",
@@ -8766,6 +8876,13 @@
               }
             ],
             "nullable": true
+          },
+          "flags": {
+            "description": "Bitfield of message flags\n\nhttps://docs.rs/revolt-models/latest/revolt_models/v0/enum.MessageFlags.html",
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0.0,
+            "nullable": true
           }
         }
       },
@@ -8869,80 +8986,6 @@
             }
           }
         ]
-      },
-      "Member": {
-        "description": "Server Member",
-        "type": "object",
-        "required": [
-          "_id",
-          "joined_at"
-        ],
-        "properties": {
-          "_id": {
-            "description": "Unique member id",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MemberCompositeKey"
-              }
-            ]
-          },
-          "joined_at": {
-            "description": "Time at which this user joined the server",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ISO8601 Timestamp"
-              }
-            ]
-          },
-          "nickname": {
-            "description": "Member's nickname",
-            "type": "string",
-            "nullable": true
-          },
-          "avatar": {
-            "description": "Avatar attachment",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/File"
-              }
-            ],
-            "nullable": true
-          },
-          "roles": {
-            "description": "Member's roles",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "timeout": {
-            "description": "Timestamp this member is timed out until",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ISO8601 Timestamp"
-              }
-            ],
-            "nullable": true
-          }
-        }
-      },
-      "MemberCompositeKey": {
-        "description": "Composite primary key consisting of server and user id",
-        "type": "object",
-        "required": [
-          "server",
-          "user"
-        ],
-        "properties": {
-          "server": {
-            "description": "Server Id",
-            "type": "string"
-          },
-          "user": {
-            "description": "User Id",
-            "type": "string"
-          }
-        }
       },
       "MessageSort": {
         "description": "Message Sort\n\nSort used for retrieving messages",
